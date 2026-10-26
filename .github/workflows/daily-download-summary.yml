@@ -1,0 +1,30 @@
+name: Gunluk indirme ozeti
+on:
+  schedule:
+    # 06:00 UTC = 09:00 Turkiye. Sonraki tetikler yalniz basarisiz gonderimi yeniden dener.
+    - cron: '0,20,40 6 * * *'
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: daily-download-summary
+  cancel-in-progress: false
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Gunluk ozeti gonder
+        env:
+          NOTIFY_KEY: ${{ secrets.DOWNLOAD_NOTIFY_KEY }}
+        run: |
+          set -eu
+          if [ -z "$NOTIFY_KEY" ]; then
+            echo 'Bildirim erisim anahtari eksik.' >&2
+            exit 1
+          fi
+          curl --silent --show-error --fail-with-body --max-time 35 \
+            --request POST \
+            --header "Authorization: Bearer $NOTIFY_KEY" \
+            https://proformateklif.com/api/download-daily-report
+
